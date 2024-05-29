@@ -1,0 +1,3 @@
+"/home/elekrisk/qmk_firmware/keyboards/ymdk/id75/keymaps/elekrisk/keymap.c"
+"/home/elekrisk/qmk_firmware/keyboards/ymdk/id75/keymaps/vial/keymap.c"
+"/home/elekrisk/qmk_firmware/keyboards/ymdk/id75/keymaps/vial/config.h"
