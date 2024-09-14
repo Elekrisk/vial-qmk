@@ -1,5 +1,5 @@
 #!/bin/bash
-qmk compile
+qmk compile || exit
 if uname -a | grep WSL
 then
   if [ -d /mnt/g ]
