@@ -5,7 +5,38 @@
             "name": "Cesc",
              "title": "Control/escape/colon",
             "shortName": "B_CAPS"
+        },
+        {
+            "name": "Macro GLHF",
+             "title": "LoL macro gl hf",
+            "shortName": "GLHF"
+        },
+        {
+            "name": "Macro GG",
+             "title": "LoL macro gg",
+            "shortName": "GG"
+        },
+        {
+            "name": "B_TEST",
+             "title": "Test key",
+            "shortName": "TEST"
+        },
+        {
+            "name": "OSM RALT",
+             "title": "One shot alt gr",
+            "shortName": "OSM ALTGR"
+        },
+        {
+            "name": "Tilde",
+             "title": "Non-dead tilde",
+            "shortName": "~"
+        },
+        {
+            "name": "Circumflex",
+             "title": "Non-dead circumflex",
+            "shortName": "^"
         }
+
     ],
     "matrix": {
         "rows": 10,
