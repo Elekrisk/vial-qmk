@@ -1,6 +1,9 @@
 // Copyright 2023 Danny Nguyen (@nooges)
 // SPDX-License-Identifier: GPL-2.0-or-later
 
+#include <stdint.h>
+#include <stdio.h>
+#include <string.h>
 #include QMK_KEYBOARD_H
 #include "print.h"
 
@@ -29,7 +32,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
   //├────────┼────────┼────────┼────────┼────────┼────────┤                          ├────────┼────────┼────────┼────────┼────────┼────────┤
      B_CAPS,  KC_A,    KC_S,    KC_D,    KC_F,    KC_G,                               KC_H,    KC_J,    KC_K,    KC_L,    KC_SCLN, KC_QUOT,
   //├────────┼────────┼────────┼────────┼────────┼────────┼────────┐        ┌────────┼────────┼────────┼────────┼────────┼────────┼────────┤
-     KC_LSFT, KC_Z,    KC_X,    KC_C,    KC_V,    KC_B,    KC_HOME,          KC_END,  KC_N,    KC_M,    KC_COMM, KC_DOT,  KC_QUES, KC_RSFT,
+     KC_LSFT, KC_Z,    KC_X,    KC_C,    KC_V,    KC_B,    KC_HOME,          KC_END,  KC_N,    KC_M,    KC_COMM, KC_DOT,  KC_SLSH, KC_RSFT,
   //└────────┴────────┴────────┴───┬────┴───┬────┴───┬────┴───┬────┘        └───┬────┴───┬────┴───┬────┴───┬────┴────────┴────────┴────────┘
                                     KC_LGUI, TL_LOWR, KC_SPC,                    KC_ENT,  TL_UPPR, KC_LALT
                                 // └────────┴────────┴────────┘                 └────────┴────────┴────────┘
@@ -168,6 +171,9 @@ enum my_color {
 };
 
 static bool ralt_pressed;
+static uint8_t bound_leds[4][64];
+static uint8_t bound_led_indices[4];
+
 
 void set_color(uint8_t index, enum my_color color) {
 	switch (color) {
@@ -204,6 +210,8 @@ void set_color(uint8_t index, enum my_color color) {
 
 void keyboard_post_init_user(void) {
 	ralt_pressed = false;
+	memset(bound_leds, 0, 4*64);
+	memset(bound_led_indices, 0, 4);
 }
 
 void oneshot_mods_changed_user(uint8_t mods) {
@@ -236,6 +244,15 @@ bool rgb_matrix_indicators_advanced_user(uint8_t led_min, uint8_t led_max) {
 		set_color(63, M_MAGENTA);
 	}
 
+	for (uint8_t i = 0; i < bound_led_indices[0]; i++) {
+		static bool p = true;
+		if (p) {
+			p = false;
+			printf("Setting led %u at %u\n", bound_leds[0][i], i);
+		}
+		set_color(bound_leds[0][i], M_MAGENTA);
+	}
+
 	// set_color(cur_index, M_MAGENTA);
 
   	return false;
@@ -257,5 +274,53 @@ bool caps_word_press_user(uint16_t keycode) {
 
 		default:
 			return false;
+	}
+}
+
+enum command {
+	CLEAR_BINDINGS,
+	SET_BINDINGS
+};
+
+static bool find_keycode(uint16_t keycode, uint8_t row, uint8_t col) {
+		for (uint8_t row = 0; row < MATRIX_ROWS; ++row) {
+			for (uint8_t col = 0; col < MATRIX_COLS; ++col) {
+				uint16_t key = keymaps[0][row][col];
+
+				if (key == keycode) {
+					printf("Keycode %u found at row %u, col %u\n", keycode, row, col);
+					uint8_t index = g_led_config.matrix_co[row][col];
+					if (index == NO_LED) {
+						continue;
+					}
+
+					uint8_t i = bound_led_indices[0]++;
+					printf("Adding led %u to %u\n", index, i);
+					bound_leds[0][i] = index;
+				}
+			}
+		}
+		return false;
+}
+
+void raw_hid_receive_kb(uint8_t *data, uint8_t length) {
+	if (data[0] == 0xE0) {
+		switch (data[1]) {
+			case CLEAR_BINDINGS:
+				memset(bound_leds, 0, 4*64);
+				memset(bound_led_indices, 0, 4);
+				break;
+			case SET_BINDINGS:
+				for (int i = 2; i < 128; i += 2) {
+					uint16_t keycode = (uint16_t)(data[i]) | ((uint16_t)(data[i + 1]) << 8);
+					printf("Keycode %u\n", keycode);
+					if (keycode == 0) {
+						break;
+					}
+
+					find_keycode(keycode, 0, 0);
+				}
+				break;
+		}
 	}
 }
